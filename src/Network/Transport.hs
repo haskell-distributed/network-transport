@@ -30,6 +30,7 @@ import Control.Exception (Exception)
 import Control.Applicative ((<$>))
 import Data.Typeable (Typeable)
 import Data.Binary (Binary(get, put))
+import qualified Data.Serialize as S (Serialize,put,get)
 import Data.Word (Word64)
 
 --------------------------------------------------------------------------------
@@ -132,6 +133,10 @@ newtype EndPointAddress = EndPointAddress { endPointAddressToByteString :: ByteS
 instance Binary EndPointAddress where
   put = put . endPointAddressToByteString
   get = EndPointAddress . BS.copy <$> get
+
+instance S.Serialize EndPointAddress where
+  put = S.put . endPointAddressToByteString
+  get = EndPointAddress . BS.copy <$> S.get
 
 instance Show EndPointAddress where
   show = BSC.unpack . endPointAddressToByteString
