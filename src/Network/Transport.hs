@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 -- | Network Transport
 module Network.Transport
   ( -- * Types
@@ -30,10 +31,10 @@ import Control.DeepSeq (NFData(rnf))
 import Control.Exception (Exception)
 import Control.Applicative ((<$>))
 import Data.Typeable (Typeable)
-import Data.Binary (Binary(put, get), putWord8, getWord8)
 import Data.Hashable
-import Data.Word (Word64)
 import Data.Data (Data)
+import Data.Binary
+import GHC.Generics (Generic)
 
 --------------------------------------------------------------------------------
 -- Main API                                                                   --
@@ -98,7 +99,10 @@ data Event =
   | EndPointClosed
     -- | An error occurred
   | ErrorEvent (TransportError EventErrorCode)
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
+instance Binary Event
+  
 
 -- | Connection data ConnectHintsIDs enable receivers to distinguish one connection from another.
 type ConnectionId = Word64
@@ -108,19 +112,21 @@ data Reliability =
     ReliableOrdered
   | ReliableUnordered
   | Unreliable
-  deriving (Show, Eq, Typeable)
+  deriving (Show, Eq, Typeable, Generic)
 
-instance Binary Reliability where
-  put ReliableOrdered   = putWord8 0
-  put ReliableUnordered = putWord8 1
-  put Unreliable        = putWord8 2
-  get = do
-    header <- getWord8
-    case header of
-      0 -> return ReliableOrdered
-      1 -> return ReliableUnordered
-      2 -> return Unreliable
-      _ -> fail "Reliability.get: invalid"
+
+-- 
+instance Binary Reliability
+--   put ReliableOrdered   = putWord8 0
+--   put ReliableUnordered = putWord8 1
+--   put Unreliable        = putWord8 2
+--   get = do
+--     header <- getWord8
+--     case header of
+--       0 -> return ReliableOrdered
+--       1 -> return ReliableUnordered
+--       2 -> return Unreliable
+--       _ -> fail "Reliability.get: invalid"
 
 -- | Multicast group.
 data MulticastGroup = MulticastGroup {
@@ -155,7 +161,9 @@ instance NFData EndPointAddress where rnf x = x `seq` ()
 
 -- | EndPointAddress of a multicast group.
 newtype MulticastAddress = MulticastAddress { multicastAddressToByteString :: ByteString }
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic)
+
+instance Binary MulticastAddress
 
 instance Show MulticastAddress where
   show = show . multicastAddressToByteString
@@ -191,7 +199,9 @@ defaultConnectHints = ConnectHints {
 -- | Errors returned by Network.Transport API functions consist of an error
 -- code and a human readable description of the problem
 data TransportError error = TransportError error String
-  deriving (Show, Typeable)
+  deriving (Show, Typeable, Generic)
+
+instance (Binary error) => Binary (TransportError error)
 
 -- | Although the functions in the transport API never throw TransportErrors
 -- (but return them explicitly), application code may want to turn these into
@@ -287,4 +297,6 @@ data EventErrorCode =
     -- or for the EventConnectionLost to be posted and for the new connection
     -- to be considered the first connection of the "new bundle".
   | EventConnectionLost EndPointAddress
-  deriving (Show, Typeable, Eq)
+  deriving (Show, Typeable, Eq, Generic)
+
+instance Binary EventErrorCode
