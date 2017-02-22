@@ -28,7 +28,6 @@ import Prelude hiding (catch)
 #endif
 
 import Foreign.Storable (pokeByteOff, peekByteOff)
-import Foreign.C (CInt(..), CShort(..))
 import Foreign.ForeignPtr (withForeignPtr)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS (length)
@@ -58,17 +57,17 @@ import System.Timeout (timeout)
 
 #ifdef mingw32_HOST_OS
 
-foreign import stdcall unsafe "htonl" htonl :: CInt -> CInt
-foreign import stdcall unsafe "ntohl" ntohl :: CInt -> CInt
-foreign import stdcall unsafe "htons" htons :: CShort -> CShort
-foreign import stdcall unsafe "ntohs" ntohs :: CShort -> CShort
+foreign import stdcall unsafe "htonl" htonl :: Word32 -> Word32
+foreign import stdcall unsafe "ntohl" ntohl :: Word32 -> Word32
+foreign import stdcall unsafe "htons" htons :: Word16 -> Word16
+foreign import stdcall unsafe "ntohs" ntohs :: Word16 -> Word16
 
 #else
 
-foreign import ccall unsafe "htonl" htonl :: CInt -> CInt
-foreign import ccall unsafe "ntohl" ntohl :: CInt -> CInt
-foreign import ccall unsafe "htons" htons :: CShort -> CShort
-foreign import ccall unsafe "ntohs" ntohs :: CShort -> CShort
+foreign import ccall unsafe "htonl" htonl :: Word32 -> Word32
+foreign import ccall unsafe "ntohl" ntohl :: Word32 -> Word32
+foreign import ccall unsafe "htons" htons :: Word16 -> Word16
+foreign import ccall unsafe "ntohs" ntohs :: Word16 -> Word16
 
 #endif
 
@@ -76,8 +75,7 @@ foreign import ccall unsafe "ntohs" ntohs :: CShort -> CShort
 encodeWord32 :: Word32 -> ByteString
 encodeWord32 i32 =
   BSI.unsafeCreate 4 $ \p ->
-    -- fromIntegral :: Word32 -> CInt
-    pokeByteOff p 0 (htonl . fromIntegral $ i32)
+    pokeByteOff p 0 (htonl i32)
 
 -- | Deserialize 32-bit from network byte order
 -- Throws an IO exception if this is not exactly 32 bits.
@@ -93,10 +91,9 @@ decodeWord32 bs
 
 -- | Serialize 16-bit to network byte order
 encodeWord16 :: Word16 -> ByteString
-encodeWord16 i16 =
+encodeWord16 w16 =
   BSI.unsafeCreate 2 $ \p ->
-    -- fromIntegral :: Word16 -> CInt
-    pokeByteOff p 0 (htons . fromIntegral $ i16)
+    pokeByteOff p 0 (htons w16)
 
 -- | Deserialize 16-bit from network byte order
 -- Throws an IO exception if this is not exactly 16 bits.
