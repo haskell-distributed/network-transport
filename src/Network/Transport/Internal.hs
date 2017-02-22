@@ -73,9 +73,9 @@ foreign import ccall unsafe "ntohs" ntohs :: Word16 -> Word16
 
 -- | Serialize 32-bit to network byte order
 encodeWord32 :: Word32 -> ByteString
-encodeWord32 i32 =
+encodeWord32 w32 =
   BSI.unsafeCreate 4 $ \p ->
-    pokeByteOff p 0 (htonl i32)
+    pokeByteOff p 0 (htonl w32)
 
 -- | Deserialize 32-bit from network byte order
 -- Throws an IO exception if this is not exactly 32 bits.
