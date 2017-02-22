@@ -84,10 +84,7 @@ decodeWord32 bs
   | BS.length bs /= 4 = throw $ userError "decodeWord32: not 4 bytes"
   | otherwise         = BSI.inlinePerformIO $ do
       let (fp, offset, _) = BSI.toForeignPtr bs
-      withForeignPtr fp $ \p -> do
-        w32 <- peekByteOff p offset
-        -- fromIntegral :: CInt -> Word32
-        return (fromIntegral . ntohl $ w32)
+      withForeignPtr fp $ \p -> ntohl <$> peekByteOff p offset
 
 -- | Serialize 16-bit to network byte order
 encodeWord16 :: Word16 -> ByteString
@@ -102,10 +99,7 @@ decodeWord16 bs
   | BS.length bs /= 2 = throw $ userError "decodeWord16: not 2 bytes"
   | otherwise         = BSI.inlinePerformIO $ do
       let (fp, offset, _) = BSI.toForeignPtr bs
-      withForeignPtr fp $ \p -> do
-        w16 <- peekByteOff p offset
-        -- fromIntegral :: CInt -> Word16
-        return (fromIntegral . ntohs $ w16)
+      withForeignPtr fp $ \p -> ntohs <$> peekByteOff p offset
 
 -- | Encode an Enum in 32 bits by encoding its signed Int equivalent (beware
 -- of truncation, an Enum may contain more than 2^32 points).
